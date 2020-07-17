@@ -3,10 +3,11 @@ import sys
 import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import partial
+import librosa
+import shutil
 
 import cv2
 import random
-
 
 # ======================
 # ====================== Convert Video to WAV
@@ -112,6 +113,67 @@ def extract_video_frames(ds_path, length=5):
 
 
 # ======================
+# ====================== Create final format DS
+# ======================
+def convert_and_copy(output_path, video, frame_path, wav_path, start, length, lbl, split):
+    try:
+        out_path_frame = os.path.join(output_path, "images", video + ".jpg")
+        out_path_wav = os.path.join(output_path, "wavs", video + ".wav")
+        
+        # Copy frame
+        shutil.copyfile(frame_path, out_path_frame)
+        
+        # Load wav segment 
+        sr = 16000
+        wav, _ = librosa.load(wav_path, sr=sr, mono=True)
+        low = int(start * sr)
+        high = int(start * sr + length * sr)
+        if high >= len(wav):
+            high = len(wav) - 1
+        wav_seg = wav[low:high]
+        
+        # Save wav segment
+        librosa.output.write_wav(out_path_wav, wav_seg, sr)
+
+        out_metaline =  f"{video}|{lbl}|{split}"
+        return out_metaline
+
+    except:
+        return None
+        
+
+def create_final_ds(args, output_path, length=5):
+    with open(os.path.join(ds_path, "metadata.txt"), "r") as metafile:
+        metadata = metafile.readlines()
+    metadata = [l.strip() for l in metadata]
+    videos = [(l.split("|")[0], int(l.split("|")[2]), l.split("|")[3], l.split("|")[4]) for l in metadata]
+    
+    os.makedirs(output_path, exist_ok=True)
+    os.makedirs(os.path.join(output_path, "wavs"))
+    os.makedirs(os.path.join(output_path, "images"))
+
+    count_videos = len(videos)
+    executor = ProcessPoolExecutor(max_workers=20)
+    futures = []
+    for itr, (video, start, lbl, split) in enumerate(videos):
+        print(f"Converting and copyting {itr}/{count_videos}.")
+        frame_path = os.path.join(ds_path, "preprocessed/random_frames", video + ".jpg")
+        wav_path = os.path.join(ds_path, "wavs", video + ".wav")
+        if not os.path.exists(frame_path) or not os.path.exists(wav_path):
+            print(f"Error when copying {video}")
+            pass
+        result = executor.submit(partial(convert_and_copy, output_path, video, frame_path, wav_path, start, length, lbl, split))
+        futures.append(result)
+    
+    metadata = [future.result() for future in futures]
+    metadata = [l for l in metadata if l is not None]
+    with open(os.path.join(output_path, "metadata.txt"), "w") as metafile:
+        for  l in metadata:
+            metadata.write(l + "\n")
+
+    print("Finished successfully.")
+
+# ======================
 # ====================== Main
 # ======================
 if  __name__ == "__main__":
@@ -122,5 +184,8 @@ if  __name__ == "__main__":
         convert_videos_to_wav(ds_path)
     elif operation == "extract_frames":
         extract_video_frames(ds_path)
+    elif operation == "create_final_ds":
+        output_path = sys.argv[3]
+        create_final_ds(ds_path, output_path)
     else:
         raise RuntimeError("Operation not defined")
