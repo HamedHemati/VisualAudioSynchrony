@@ -5,9 +5,15 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import partial
 import librosa
 import shutil
-
+import soundfile 
+import scipy
+import numpy as np
+from scipy.io import wavfile
 import cv2
 import random
+import torch
+import glob
+
 
 # ======================
 # ====================== Convert Video to WAV
@@ -115,17 +121,23 @@ def extract_video_frames(ds_path, length=5):
 # ======================
 # ====================== Create final format DS
 # ======================
-def convert_and_copy(output_path, video, frame_path, wav_path, start, length, lbl, split):
+def convert_and_copy(itr, count_videos, output_path, video, frame_path, wav_path, start, length, lbl, split):
+    print(f"Converting {itr}/{count_videos}")
     try:
         out_path_frame = os.path.join(output_path, "images", video + ".jpg")
         out_path_wav = os.path.join(output_path, "wavs", video + ".wav")
         
-        # Copy frame
+        # Copy image frame
         shutil.copyfile(frame_path, out_path_frame)
-        
+
         # Load wav segment 
-        sr = 16000
-        wav, _ = librosa.load(wav_path, sr=sr, mono=True)
+        # wav, sr = librosa.load(wav_path, mono=True)
+        # wav, sr = soundfile.read(wav_path)
+        PCM16_RANGE =32768.0
+        
+        sr, wav = wavfile.read(wav_path)
+        wav = wav / PCM16_RANGE
+
         low = int(start * sr)
         high = int(start * sr + length * sr)
         if high >= len(wav):
@@ -133,8 +145,8 @@ def convert_and_copy(output_path, video, frame_path, wav_path, start, length, lb
         wav_seg = wav[low:high]
         
         # Save wav segment
+        wav_seg = np.asfortranarray(wav_seg[:, 0])
         librosa.output.write_wav(out_path_wav, wav_seg, sr)
-
         out_metaline =  f"{video}|{lbl}|{split}"
         return out_metaline
 
@@ -149,30 +161,52 @@ def create_final_ds(args, output_path, length=5):
     videos = [(l.split("|")[0], int(l.split("|")[2]), l.split("|")[3], l.split("|")[4]) for l in metadata]
     
     os.makedirs(output_path, exist_ok=True)
-    os.makedirs(os.path.join(output_path, "wavs"))
-    os.makedirs(os.path.join(output_path, "images"))
+    os.makedirs(os.path.join(output_path, "wavs"), exist_ok=True)
+    os.makedirs(os.path.join(output_path, "images"), exist_ok=True)
 
     count_videos = len(videos)
     executor = ProcessPoolExecutor(max_workers=20)
     futures = []
+    metadata_out = []
     for itr, (video, start, lbl, split) in enumerate(videos):
-        print(f"Converting and copyting {itr}/{count_videos}.")
         frame_path = os.path.join(ds_path, "preprocessed/random_frames", video + ".jpg")
         wav_path = os.path.join(ds_path, "wavs", video + ".wav")
         if not os.path.exists(frame_path) or not os.path.exists(wav_path):
             print(f"Error when copying {video}")
             pass
-        result = executor.submit(partial(convert_and_copy, output_path, video, frame_path, wav_path, start, length, lbl, split))
+        result = executor.submit(partial(convert_and_copy, itr, count_videos, output_path, video, frame_path, wav_path, start, length, lbl, split))
         futures.append(result)
-    
-    metadata = [future.result() for future in futures]
-    metadata = [l for l in metadata if l is not None]
+
+    metadata_out = [future.result() for future in futures]
+    metadata_out = [l for l in metadata_out if l is not None]
     with open(os.path.join(output_path, "metadata.txt"), "w") as metafile:
-        for  l in metadata:
-            metadata.write(l + "\n")
+        for l in metadata_out:
+            metafile.write(l + "\n")
 
     print("Finished successfully.")
 
+
+# ======================
+# ====================== Extract audio features
+# ======================
+def extract_audio_features_vggish(ds_path):
+    model = torch.hub.load('harritaylor/torchvggish', 'vggish')
+    model.eval()
+    features_path = os.path.join(ds_path, "audio_features_vggish")
+    os.makedirs(features_path, exist_ok=True)
+
+    list_wavs = glob.glob(os.path.join(ds_path, "wavs", "*.wav"))   
+    for itr, wav_path in enumerate(list_wavs):
+        print(f"Extracting {itr}/{len(list_wavs)}")
+        video_id = os.path.basename(wav_path).split(".")[0]
+        try:
+            out = model.forward(wav_path)
+            # out = torch.mean(out, dim=0).detach().cpu().numpy()
+            out = out[-1].detach().cpu().numpy()
+            np.save(os.path.join(features_path, video_id + ".npy"), out)
+        except:
+            print(f"Skipping {video_id}")
+            
 # ======================
 # ====================== Main
 # ======================
@@ -187,5 +221,7 @@ if  __name__ == "__main__":
     elif operation == "create_final_ds":
         output_path = sys.argv[3]
         create_final_ds(ds_path, output_path)
+    elif operation == "extract_audio_features_vggish":
+        extract_audio_features_vggish(ds_path)
     else:
         raise RuntimeError("Operation not defined")
