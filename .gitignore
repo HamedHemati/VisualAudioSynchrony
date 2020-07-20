@@ -1,8 +1,11 @@
-reated by https://www.toptal.com/developers/gitignore/api/python,visualstudiocode,macos,linux
+
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,visualstudiocode,macos,linux
 
 ### Linux ###
 *~
+
+vasync/datasets/vggsound/pytorch_vggish.pth
+vasync/datasets/vggsound/vggish_pca_params.npz
 
 # temporary files which can be created if a process still has a handle open of a deleted file
 .fuse_hidden*

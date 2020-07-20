@@ -13,7 +13,7 @@ import cv2
 import random
 import torch
 import glob
-
+from vasync.datasets.vggsound.vggsound_feat_extractor import VGGFeatExtractor
 
 # ======================
 # ====================== Convert Video to WAV
@@ -190,6 +190,24 @@ def create_final_ds(args, output_path, length=5):
 # ====================== Extract audio features
 # ======================
 def extract_audio_features_vggish(ds_path):
+    vgg_feat_extractor = VGGFeatExtractor()
+    
+    features_path = os.path.join(ds_path, "audio_features_vggish")
+    os.makedirs(features_path, exist_ok=True)
+
+    list_wavs = glob.glob(os.path.join(ds_path, "wavs", "*.wav"))   
+    for itr, wav_path in enumerate(list_wavs):
+        print(f"Extracting {itr}/{len(list_wavs)}")
+        video_id = os.path.basename(wav_path).split(".")[0]
+        try:
+            pytorch_output, postprocessed_output = vgg_feat_extractor.get_emb(wav_path)
+            out = postprocessed_output[-1]
+            np.save(os.path.join(features_path, video_id + ".npy"), out)
+        except:
+            print(f"Skipping {video_id}")
+
+
+def extract_audio_features_vggish_old(ds_path):
     model = torch.hub.load('harritaylor/torchvggish', 'vggish')
     model.eval()
     features_path = os.path.join(ds_path, "audio_features_vggish")
