@@ -1,4 +1,4 @@
-from vasync.limit_threads import *
+from vasync.utils.limit_threads import *
 import sys
 import os
 from concurrent.futures import ProcessPoolExecutor, as_completed

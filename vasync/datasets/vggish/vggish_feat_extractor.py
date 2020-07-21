@@ -2,11 +2,11 @@ import torch
 import numpy as np
 import librosa
 
-from vasync.datasets.vggsound.vggish import VGGish
-from vasync.datasets.vggsound import vggish_input, vggish_postprocess
+from vasync.datasets.vggish.vggish import VGGish
+from vasync.datasets.vggish import vggish_input, vggish_postprocess
 
 
-class VGGFeatExtractor():
+class VGGishFeatExtractor():
     def __init__(self):
         # Initialize the PyTorch model.
         self.device = 'cuda:0'
@@ -63,4 +63,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main(
+    main()
