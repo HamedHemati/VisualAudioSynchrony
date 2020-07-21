@@ -13,7 +13,7 @@ import cv2
 import random
 import torch
 import glob
-from vasync.datasets.vggsound.vggsound_feat_extractor import VGGFeatExtractor
+from vasync.datasets.vggish.vggish_feat_extractor import VGGishFeatExtractor
 
 # ======================
 # ====================== Convert Video to WAV
@@ -178,10 +178,10 @@ def create_final_ds(args, output_path, length=5):
         futures.append(result)
 
     metadata_out = [future.result() for future in futures]
-    metadata_out = [l for l in metadata_out if l is not None]
-    with open(os.path.join(output_path, "metadata.txt"), "w") as metafile:
-        for l in metadata_out:
-            metafile.write(l + "\n")
+    # metadata_out = [l for l in metadata_out if l is not None]
+    # with open(os.path.join(output_path, "metadata.txt"), "w") as metafile:
+    #     for l in metadata_out:
+    #         metafile.write(l + "\n")
 
     print("Finished successfully.")
 
@@ -190,7 +190,7 @@ def create_final_ds(args, output_path, length=5):
 # ====================== Extract audio features
 # ======================
 def extract_audio_features_vggish(ds_path):
-    vgg_feat_extractor = VGGFeatExtractor()
+    vggish_feat_extractor = VGGishFeatExtractor()
     
     features_path = os.path.join(ds_path, "audio_features_vggish")
     os.makedirs(features_path, exist_ok=True)
@@ -200,7 +200,7 @@ def extract_audio_features_vggish(ds_path):
         print(f"Extracting {itr}/{len(list_wavs)}")
         video_id = os.path.basename(wav_path).split(".")[0]
         try:
-            pytorch_output, postprocessed_output = vgg_feat_extractor.get_emb(wav_path)
+            pytorch_output, postprocessed_output = vggish_feat_extractor.get_emb(wav_path)
             out = postprocessed_output[-1]
             np.save(os.path.join(features_path, video_id + ".npy"), out)
         except:
@@ -243,4 +243,3 @@ if  __name__ == "__main__":
         extract_audio_features_vggish(ds_path)
     else:
         raise RuntimeError("Operation not defined")
-        

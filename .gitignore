@@ -4,8 +4,8 @@
 ### Linux ###
 *~
 
-vasync/datasets/vggsound/pytorch_vggish.pth
-vasync/datasets/vggsound/vggish_pca_params.npz
+vasync/datasets/vggish/pytorch_vggish.pth
+vasync/datasets/vggish/vggish_pca_params.npz
 
 # temporary files which can be created if a process still has a handle open of a deleted file
 .fuse_hidden*

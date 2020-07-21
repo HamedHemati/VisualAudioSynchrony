@@ -17,7 +17,7 @@
 
 import numpy as np
 
-from vasync.datasets.vggsound  import vggish_params
+from vasync.datasets.vggish  import vggish_params
 
 
 class Postprocessor(object):

@@ -18,8 +18,8 @@
 import numpy as np
 import resampy
 
-from vasync.datasets.vggsound import mel_features
-from vasync.datasets.vggsound import vggish_params
+from vasync.datasets.vggish import mel_features
+from vasync.datasets.vggish import vggish_params
 
 import soundfile as sf
 
