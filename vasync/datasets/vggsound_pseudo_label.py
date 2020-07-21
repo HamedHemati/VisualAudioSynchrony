@@ -1,9 +1,13 @@
+from vasync.limit_threads import *
 import os
 import glob
 from sklearn.cluster import KMeans
 import numpy as np
 
 
+#####
+#    Extract audio features and compute pseudo labels
+#####
 def load_vgg_features(ds_path, metadata_path):
     print("Loading audio features")
     features_path = os.path.join(ds_path, "audio_features_vggish")
@@ -32,18 +36,40 @@ def pseudo_labels(features, num_clusters):
     return psuedo_labels
 
 
-def main():
-    ds_path = "/raid/hhemati/Datasets/MultiModal/VGGSound/"
-    metadata_path = "/netscratch/hhemati/Datasets/MultiModal/VGGSound/metadata.txt"
-    num_clusters = 30
-
+def extract_pseudo_labels(ds_path, metadata_path, num_clusters):
     all_features, all_video_ids= load_vgg_features(ds_path, metadata_path)
     labels = pseudo_labels(all_features, num_clusters)
     
     with open(os.path.join(ds_path, f"meta_pseudo_{num_clusters}.txt"), "w") as metafile:
         for itr, video_id in enumerate(all_video_ids):
             metafile.write(video_id + "|" + str(labels[itr]) + "\n")
-    print("Finished.")
+    print("Finished extracting pseudo labels.")
+
+
+#####
+#    Add non-existing label to audio features without corresponding image frame
+#####
+def add_existing_label(ds_path, num_clusters):
+    with open(os.path.join(ds_path, f"meta_pseudo_{num_clusters}.txt"), "r") as metafile:
+        all_lines = metafile.readlines()
+    all_lines = [l.strip() for l in all_lines]
+    all_lines = [(l.split("|")[0], l.split("|")[1]) for l in all_lines]
+    images_path = os.path.join(ds_path, "images")
+    exists = [os.path.exists(os.path.join(images_path, l[0] + ".jpg")) for l in all_lines]
+    
+    with open(os.path.join(ds_path, f"meta_pseudo_{num_clusters}_final.txt"), "w") as metafile:
+        for itr, line in enumerate(all_lines):
+            if exists[itr]:
+                metafile.write(line[0] + "|" + line[1] + "\n")
+
+
+def main():
+    ds_path = "/raid/hhemati/Datasets/MultiModal/VGGSound/"
+    metadata_path = "/netscratch/hhemati/Datasets/MultiModal/VGGSound/metadata.txt"
+    num_clusters = 30
+    
+    # extract_pseudo_labels(ds_path, metadata_path, num_clusters)
+    add_existing_label(ds_path, num_clusters)
 
 
 if __name__ == "__main__":
