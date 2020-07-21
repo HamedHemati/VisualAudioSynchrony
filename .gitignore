@@ -4,6 +4,8 @@
 ### Linux ###
 *~
 
+experiments/
+outputs/
 vasync/datasets/vggish/pytorch_vggish.pth
 vasync/datasets/vggish/vggish_pca_params.npz
 
