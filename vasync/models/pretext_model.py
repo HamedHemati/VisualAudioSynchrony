@@ -10,6 +10,10 @@ class ClassifierPretextModel(nn.Module):
             base_model = models.resnet50(pretrained=False)
             self.base_model = nn.Sequential(*list(base_model.children())[:-1])
             self.classifier = nn.Linear(2048, num_cls)
+        elif pretext_base_model == "resnet18":
+            base_model = models.resnet18(pretrained=False)
+            self.base_model = nn.Sequential(*list(base_model.children())[:-1])
+            self.classifier = nn.Linear(512, num_cls)
 
     def forward(self, x):
         x = self.base_model(x)

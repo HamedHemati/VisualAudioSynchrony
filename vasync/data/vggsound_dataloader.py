@@ -5,16 +5,19 @@ from PIL import Image
 
 
 class VGGSoundDatasetCLS(Dataset):
-    def __init__(self, ds_path, num_cls):
+    def __init__(self, ds_path, num_cls, train_mode=True):
         super(VGGSoundDatasetCLS, self).__init__()
+        self.train_mode = train_mode
         self.img_path = os.path.join(ds_path, "images")
         self._load_items(ds_path, num_cls)
         self.transform = transforms.Compose([transforms.Resize(250),
                                              transforms.RandomCrop(245),
                                              transforms.ToTensor()])
-
+            
     def _load_items(self, ds_path, num_cls):
-        with open(os.path.join(ds_path, f"meta_pseudo_{num_cls}_final.txt"), "r") as metafile:
+        mode = "train" if self.train_mode else "eval"
+        
+        with open(os.path.join(ds_path, f"meta_pseudo_{num_cls}_final_{mode}.txt"), "r") as metafile:
             all_lines = metafile.readlines()
         all_lines = [l.strip() for l in all_lines]
         self.items = [(l.split("|")[0], int(l.split("|")[1])) for l in all_lines]
@@ -30,6 +33,10 @@ class VGGSoundDatasetCLS(Dataset):
         return len(self.items)   
 
 def get_vggsoundcls_dataloader(config):
-    dataset = VGGSoundDatasetCLS(config["ds_path"], config["num_cls"])
-    dataloader = DataLoader(dataset, config["batch_size"], shuffle=True, num_workers=config["num_workers"])
-    return dataloader
+    dataset_train = VGGSoundDatasetCLS(config["ds_path"], config["num_cls"], train_mode=True)
+    dataloader_train = DataLoader(dataset_train, config["batch_size"], shuffle=True, num_workers=config["num_workers"])
+    
+    dataset_eval = VGGSoundDatasetCLS(config["ds_path"], config["num_cls"], train_mode=False)
+    dataloader_eval = DataLoader(dataset_eval, config["batch_size"], shuffle=True, num_workers=config["num_workers"])
+
+    return dataloader_train, dataloader_eval
