@@ -7,13 +7,16 @@ class SimpleModel(nn.Module):
     def __init__(self):
         super(SimpleModel, self).__init__()
     
-        self.conv_layers = nn.Sequential(nn.Conv2d(3, 6, 7),
+        self.conv_layers = nn.Sequential(nn.Conv2d(3, 32, 7),
+                                         nn.BatchNorm2d(32),
                                          nn.MaxPool2d(4, 4),
-                                         nn.BatchNorm2d(6),
-                                         nn.Conv2d(6, 16, 5),
-                                         nn.BatchNorm2d(16),
-                                         nn.MaxPool2d(4, 4),) # B x 16 x 13 x 13)
-        self.linear = nn.Linear(16 * 13 * 13, 128)
+                                         nn.Conv2d(32, 64, 5),
+                                         nn.BatchNorm2d(64),
+                                         nn.MaxPool2d(4, 4),
+                                         nn.Conv2d(64, 64, 3),
+                                         nn.BatchNorm2d(64),
+                                         nn.MaxPool2d(2, 2),) # B x 64 x 5 x 5)
+        self.linear = nn.Linear(64 * 5 * 5, 128)
     
     def forward(self, x):
         x = self.conv_layers(x)
