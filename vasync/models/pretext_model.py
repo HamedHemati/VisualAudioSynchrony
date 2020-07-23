@@ -7,23 +7,26 @@ class SimpleModel(nn.Module):
     def __init__(self):
         super(SimpleModel, self).__init__()
     
-        self.conv_layers = nn.Sequential(nn.Conv2d(3, 32, 7),
-                                         nn.BatchNorm2d(32),
-                                         nn.MaxPool2d(4, 4),
-                                         nn.Conv2d(32, 64, 5),
+        self.conv_layers = nn.Sequential(nn.Conv2d(3, 64, 5),
                                          nn.BatchNorm2d(64),
                                          nn.MaxPool2d(4, 4),
-                                         nn.Conv2d(64, 64, 3),
-                                         nn.BatchNorm2d(64),
-                                         nn.MaxPool2d(2, 2),) # B x 64 x 5 x 5)
-        self.linear = nn.Linear(64 * 5 * 5, 128)
+                                         nn.Conv2d(64, 128, 3),
+                                         nn.BatchNorm2d(128),
+                                         nn.MaxPool2d(2, 2),
+                                         nn.Conv2d(128, 256, 3),
+                                         nn.BatchNorm2d(256),
+                                         nn.MaxPool2d(2, 2),
+                                         nn.Conv2d(256, 512, 3),
+                                         nn.BatchNorm2d(512),
+                                         nn.MaxPool2d(2, 2),) # B x 256 x 5 x 5)
+        self.linear = nn.Linear(512 * 2 * 2, 128)
     
     def forward(self, x):
+        # Input shape: 3 x 128 x 128
         x = self.conv_layers(x)
         x = x.view(x.size(0), -1)
         x = self.linear(x)
         return x
-
 
 class ClassifierPretextModel(nn.Module):
     def __init__(self, pretext_base_model, num_cls):
