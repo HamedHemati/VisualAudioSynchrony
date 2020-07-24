@@ -47,9 +47,9 @@ def extract_pseudo_labels(ds_path, metadata_path, num_clusters):
 
 
 #####
-#    Add non-existing label to audio features without corresponding image frame
+#    Remove ids whose corresponding files are missing 
 #####
-def add_existing_label(ds_path, num_clusters):
+def remove_missing_ids(ds_path, num_clusters):
     with open(os.path.join(ds_path, f"meta_pseudo_{num_clusters}.txt"), "r") as metafile:
         all_lines = metafile.readlines()
     all_lines = [l.strip() for l in all_lines]
@@ -63,13 +63,38 @@ def add_existing_label(ds_path, num_clusters):
                 metafile.write(line[0] + "|" + line[1] + "\n")
 
 
+
+#####
+#     Copy real labels
+#####
+def copy_real_labels(ds_path, original_metadata, num_clusters):
+    with open(original_metadata, "r") as metafile:
+        metadata_lines = metafile.readlines()
+    video_to_cls = {l.strip().split("|")[0]:l.strip().split("|")[3] for l in metadata_lines}
+    all_cls = [l.strip().split("|")[3].split(",")[0].strip() for l in metadata_lines]
+    all_cls = set(all_cls)
+    print(f"Number of classes {len(all_cls)}")
+    cls_to_id = {cl:i for (i, cl) in enumerate(all_cls)}
+    with open(os.path.join(ds_path, f"meta_pseudo_{num_clusters}.txt"), "r") as metafile:
+        all_lines = metafile.readlines()
+    all_lines = [l.strip() for l in all_lines]
+    all_lines = [(l.split("|")[0], l.split("|")[1]) for l in all_lines]
+    images_path = os.path.join(ds_path, "images")
+    exists = [os.path.exists(os.path.join(images_path, l[0] + ".jpg")) for l in all_lines]
+    with open(os.path.join(ds_path, f"meta_real_final.txt"), "w") as metafile:
+        for itr, line in enumerate(all_lines):
+            if exists[itr]:
+                cl = video_to_cls[line[0]].split(",")[0].strip()
+                metafile.write(line[0] + "|" + str(cls_to_id[cl]) +"|"+ cl + "\n")
+
 def main():
     ds_path = "/raid/hhemati/Datasets/MultiModal/VGGSound/"
     metadata_path = "/netscratch/hhemati/Datasets/MultiModal/VGGSound/metadata.txt"
     num_clusters = 30
     
     # extract_pseudo_labels(ds_path, metadata_path, num_clusters)
-    add_existing_label(ds_path, num_clusters)
+    # remove_missing_ids(ds_path, num_clusters)
+    copy_real_labels(ds_path, metadata_path, num_clusters)
 
 
 if __name__ == "__main__":
