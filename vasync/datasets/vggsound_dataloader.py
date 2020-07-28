@@ -14,7 +14,7 @@ class VGGSoundDatasetCLS(Dataset):
         self.transform = transforms.Compose([transforms.Resize(img_size),
                                              transforms.RandomCrop(img_size),
                                              transforms.ToTensor()])
-        
+    
     def _load_items(self, ds_path, num_cls):
         mode = "train" if self.train_mode else "eval"
         if self.meta_name:
@@ -36,6 +36,7 @@ class VGGSoundDatasetCLS(Dataset):
 
     def __len__(self):
         return len(self.items)   
+
 
 def get_vggsoundcls_dataloader(config):
     dataset_train = VGGSoundDatasetCLS(config["ds_path"], config["num_cls"], config["img_size"], train_mode=True, meta_name=config["meta_name"])

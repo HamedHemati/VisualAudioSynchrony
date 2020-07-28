@@ -17,7 +17,7 @@
 
 import numpy as np
 
-from vasync.datasets.vggish  import vggish_params
+from vasync.data_preprocess.vggish  import vggish_params
 
 
 class Postprocessor(object):

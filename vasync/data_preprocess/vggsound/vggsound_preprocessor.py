@@ -13,7 +13,7 @@ import cv2
 import random
 import torch
 import glob
-from vasync.datasets.vggish.vggish_feat_extractor import VGGishFeatExtractor
+from vasync.data_preprocess.vggish.vggish_feat_extractor import VGGishFeatExtractor
 
 # ======================
 # ====================== Convert Video to WAV

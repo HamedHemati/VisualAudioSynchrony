@@ -2,8 +2,8 @@ import torch
 import numpy as np
 import librosa
 
-from vasync.datasets.vggish.vggish import VGGish
-from vasync.datasets.vggish import vggish_input, vggish_postprocess
+from vasync.data_preprocess.vggish.vggish import VGGish
+from vasync.data_preprocess.vggish import vggish_input, vggish_postprocess
 
 
 class VGGishFeatExtractor():
@@ -11,10 +11,10 @@ class VGGishFeatExtractor():
         # Initialize the PyTorch model.
         self.device = 'cuda:0'
         pytorch_model = VGGish()
-        pytorch_model.load_state_dict(torch.load('vasync/datasets/vggsound/pytorch_vggish.pth'))
+        pytorch_model.load_state_dict(torch.load('vasync/data_preprocess/vggsound/pytorch_vggish.pth'))
         self.pytorch_model = pytorch_model.to(self.device)
         self.pytorch_model.eval()
-        self.post_processor = vggish_postprocess.Postprocessor('vasync/datasets/vggsound/vggish_pca_params.npz')
+        self.post_processor = vggish_postprocess.Postprocessor('vasync/data_preprocess/vggsound/vggish_pca_params.npz')
 
     def cal_feat(self, input_batch):
         pytorch_output = self.pytorch_model(input_batch)

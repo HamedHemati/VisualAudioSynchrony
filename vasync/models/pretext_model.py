@@ -3,9 +3,9 @@ import torch.nn as nn
 import torchvision.models as models
 
 
-class SimpleModel(nn.Module):
+class SimplePretextModel(nn.Module):
     def __init__(self):
-        super(SimpleModel, self).__init__()
+        super(SimplePretextModel, self).__init__()
     
         self.conv_layers = nn.Sequential(nn.Conv2d(3, 64, 5),
                                          nn.BatchNorm2d(64),
@@ -40,7 +40,7 @@ class ClassifierPretextModel(nn.Module):
             self.base_model = nn.Sequential(*list(base_model.children())[:-1])
             self.classifier = nn.Linear(512, num_cls)
         elif pretext_base_model == "simple_model":
-            self.base_model = SimpleModel()
+            self.base_model = SimplePretextModel()
             self.classifier = nn.Linear(128, num_cls)
 
     def forward(self, x):

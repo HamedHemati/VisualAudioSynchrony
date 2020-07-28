@@ -31,7 +31,7 @@ https://github.com/tensorflow/models/blob/master/research/slim/nets/vgg.py
 """
 
 import tensorflow as tf
-from vasync.datasets.vggsound  import vggish_params as params
+from vasync.data_preprocess.vggsound  import vggish_params as params
 
 slim = tf.contrib.slim
 
